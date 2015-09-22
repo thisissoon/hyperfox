@@ -23,9 +23,10 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 
 	"github.com/xiam/hyperfox/proxy"
