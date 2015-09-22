@@ -26,10 +26,13 @@ type Response struct {
 	RequestBody   []byte    `json:"request_body",json"`
 	DateStart     time.Time `json:"date_start",json"`
 	DateEnd       time.Time `json:"date_end",json"`
-	TimeTaken     int64     `json:"time_taken",json"`
+	TimeTaken     time.Time `json:"time_taken",json"`
 }
 
 func FromResponse(response *capture.Response) Response {
+
+	taken := response.DateStart.UnixNano() + response.TimeTaken
+	secods := int64(float64(taken) * 1e-9)
 	return Response{
 		Origin:        response.Origin,
 		Method:        response.Method,
@@ -46,7 +49,7 @@ func FromResponse(response *capture.Response) Response {
 		RequestBody:   response.RequestBody,
 		DateStart:     response.DateStart,
 		DateEnd:       response.DateEnd,
-		TimeTaken:     response.TimeTaken,
+		TimeTaken:     time.Unix(secods, taken-secods*1e9),
 	}
 }
 
