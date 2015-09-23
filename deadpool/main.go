@@ -1,6 +1,13 @@
 package deadpool
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	log "github.com/Sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/xiam/hyperfox/tools/capture"
@@ -29,30 +36,54 @@ type Response struct {
 	TimeTaken     time.Time `json:"time_taken",json"`
 }
 
-func FromResponse(response *capture.Response) Response {
+type DeadpoolApiAdapter struct {
+}
 
-	taken := response.DateStart.UnixNano() + response.TimeTaken
+func (a DeadpoolApiAdapter) TransformResponse(r *capture.Response) Response {
+	taken := r.DateStart.UnixNano() + r.TimeTaken
 	secods := int64(float64(taken) * 1e-9)
+
 	return Response{
-		Origin:        response.Origin,
-		Method:        response.Method,
-		Status:        response.Status,
-		ContentType:   response.ContentType,
-		ContentLength: response.ContentLength,
-		Host:          response.Host,
-		URL:           response.URL,
-		Scheme:        response.Scheme,
-		Path:          response.Path,
-		Header:        Header{response.Header},
-		Body:          response.Body,
-		RequestHeader: Header{response.RequestHeader},
-		RequestBody:   response.RequestBody,
-		DateStart:     response.DateStart,
-		DateEnd:       response.DateEnd,
+		Origin:        r.Origin,
+		Method:        r.Method,
+		Status:        r.Status,
+		ContentType:   r.ContentType,
+		ContentLength: r.ContentLength,
+		Host:          r.Host,
+		URL:           r.URL,
+		Scheme:        r.Scheme,
+		Path:          r.Path,
+		Header:        Header{r.Header},
+		Body:          r.Body,
+		RequestHeader: Header{r.RequestHeader},
+		RequestBody:   r.RequestBody,
+		DateStart:     r.DateStart,
+		DateEnd:       r.DateEnd,
 		TimeTaken:     time.Unix(secods, taken-secods*1e9),
 	}
 }
 
-// func SendResponse(response *capture.Response) error {
-// 	payload = string(&response)
-// }
+func (a DeadpoolApiAdapter) ParseResponse(r *capture.Response) ([]byte, error) {
+	res := a.TransformResponse(r)
+	defer func() {
+		if err := recover(); err != nil {
+			log.Error(err)
+		}
+	}()
+	b, err := json.Marshal(res)
+	if err != nil {
+		return []byte{}, err
+	}
+	return b, nil
+}
+
+func (a DeadpoolApiAdapter) Post(payload []byte) ([]byte, error) {
+	deadpoolUrl := os.Getenv("DEADPOOL_URL")
+	if deadpoolUrl == "" {
+		return []byte{}, errors.New("Env variable DEADPOOL_URL cannot be empty")
+	}
+	response, _ := http.Post(deadpoolUrl+"/v1/report", "application/json", bytes.NewReader(payload))
+	defer response.Body.Close()
+
+	return ioutil.ReadAll(response.Body)
+}

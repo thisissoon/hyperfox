@@ -31,7 +31,7 @@ func TestPopulateDeadPoolResponseFromCaptureResponse(t *testing.T) {
 		TimeTaken:     now.UnixNano() - started.UnixNano(),
 	}
 
-	r := FromResponse(&cr)
+	r := DeadpoolApiAdapter{}.TransformResponse(&cr)
 	assert.Equal(t, cr.Origin, r.Origin)
 	assert.Equal(t, cr.Method, r.Method)
 	assert.Equal(t, cr.Status, r.Status)
