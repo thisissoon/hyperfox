@@ -27,8 +27,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"os"
 
-	"github.com/xiam/hyperfox/api"
-	"github.com/xiam/hyperfox/deadpool"
+	"github.com/thisissoon/hyperfox/api"
+	"github.com/thisissoon/hyperfox/deadpool"
 	"github.com/xiam/hyperfox/proxy"
 	"github.com/xiam/hyperfox/tools/capture"
 	"github.com/xiam/hyperfox/tools/logger"
